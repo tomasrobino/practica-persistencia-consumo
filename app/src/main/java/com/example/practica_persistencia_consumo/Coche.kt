@@ -28,6 +28,13 @@ interface CocheDao {
     fun getAllCoches(): Flow<List<Coche>>
 }
 
+class CocheRepository(private val cocheDao: CocheDao) {
+    fun getAllCoches(): Flow<List<Coche>> = cocheDao.getAllCoches()
+    suspend fun insertCoche(coche: Coche) {
+        cocheDao.insert(coche)
+    }
+}
+
 @Database(entities = [Coche::class], version = 1, exportSchema = false)
 abstract class CocheDatabase: RoomDatabase() {
     abstract fun cocheDao(): CocheDao
