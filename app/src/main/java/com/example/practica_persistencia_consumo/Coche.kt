@@ -11,7 +11,7 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import kotlinx.coroutines.flow.Flow
 
-@Entity
+@Entity(tableName = "coches")
 data class Coche(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val color: String,
