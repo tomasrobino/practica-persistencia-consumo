@@ -8,11 +8,14 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.Button
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
 
 @Composable
 fun CocheItem(coche: Coche) {
@@ -30,12 +33,25 @@ fun CocheItem(coche: Coche) {
 }
 
 @Composable
-fun ListaCoches(cocheDao: CocheDao) {
-    val coches by cocheDao.getAllCoches().collectAsState(initial = emptyList())
+fun ListaCoches(cocheRepository: CocheRepository) {
+    val coches by cocheRepository.getAllCoches().collectAsState(initial = emptyList())
+    val scope = rememberCoroutineScope()
+    Column() {
+        Button(onClick = {
+            scope.launch {
+                cocheRepository.insertCoche(
+                    Coche(color = "fdsfds", modelo = "fdsfsdf", marca = "sddsad")
+                )
+            }
+        }) {
+            Text("Agregar coche")
+        }
 
-    LazyColumn {
-        items(coches) {
-            coche -> CocheItem(coche = coche)
+
+        LazyColumn {
+            items(coches) {
+                    coche -> CocheItem(coche = coche)
+            }
         }
     }
 }
