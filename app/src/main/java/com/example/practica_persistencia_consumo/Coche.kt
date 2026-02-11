@@ -35,20 +35,21 @@ class CocheRepository(private val cocheDao: CocheDao) {
     }
 }
 
-@Database(entities = [Coche::class], version = 1, exportSchema = false)
-abstract class CocheDatabase: RoomDatabase() {
-    abstract fun cocheDao(): CocheDao
+@Database(entities = [Coche::class,Motor::class], version = 1, exportSchema = false)
+abstract class AppDatabase: RoomDatabase() {
 
+    abstract fun cocheDao(): CocheDao
+    abstract fun MotorDao(): MotorDao
     companion object {
         @Volatile
-        private var INSTANCE: CocheDatabase? = null
+        private var INSTANCE: AppDatabase? = null
 
-        fun getDatabase(context: Context): CocheDatabase {
+        fun getDatabase(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
                     context.applicationContext,
-                    CocheDatabase::class.java,
-                    "coche_database"
+                    AppDatabase::class.java,
+                    "concesionario_database"
                 ).build()
                 INSTANCE = instance
                 return instance
