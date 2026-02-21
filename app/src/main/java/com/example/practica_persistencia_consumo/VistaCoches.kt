@@ -1,177 +1,480 @@
 package com.example.practica_persistencia_consumo
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Divider
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.ScrollableTabRow
+import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.launch
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+
 
 @Composable
-fun CocheConMotorItem(cocheConMotor: CocheConMotor) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(8.dp),
-        elevation = CardDefaults.cardElevation(4.dp)
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text("🚗 Coche", style = MaterialTheme.typography.titleMedium)
-            Text("Color: ${cocheConMotor.coche.color}")
-            Text("Marca: ${cocheConMotor.coche.marca}")
-            Text("Modelo: ${cocheConMotor.coche.modelo}")
+fun PantallaPrincipal(vm: ElViewModel) {
+    var tabSeleccionado by remember { mutableIntStateOf(0) }
+    val tabs = listOf("Coches", "Motores", "Propietarios", "Mecanicos", "Asignaciones")
 
-            Spacer(Modifier.height(8.dp))
-            Divider()
-            Spacer(Modifier.height(8.dp))
-
-            if (cocheConMotor.motor != null) {
-                Text("🔧 Motor", style = MaterialTheme.typography.titleSmall)
-                Text("Marca: ${cocheConMotor.motor.marca}")
-                Text("Modelo: ${cocheConMotor.motor.modelo}")
-                Text("Cilindrada: ${cocheConMotor.motor.cilindrada} cc")
-            } else {
-                Text("Sin motor asignado", style = MaterialTheme.typography.bodySmall)
+    Column(modifier = Modifier.fillMaxSize()) {
+        ScrollableTabRow(selectedTabIndex = tabSeleccionado) {
+            tabs.forEachIndexed { index, titulo ->
+                Tab(
+                    selected = tabSeleccionado == index,
+                    onClick = { tabSeleccionado = index },
+                    text = { Text(titulo) }
+                )
             }
+        }
+        when (tabSeleccionado) {
+            0 -> TabCoches(vm)
+            1 -> TabMotores(vm)
+            2 -> TabPropietarios(vm)
+            3 -> TabMecanicos(vm)
+            4 -> TabAsignaciones(vm)
         }
     }
 }
 
+
 @Composable
-fun PropietarioConCochesItem(propietarioConCoches: PropietarioConCoches) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(8.dp),
-        elevation = CardDefaults.cardElevation(4.dp)
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text("👤 Propietario", style = MaterialTheme.typography.titleMedium)
-            Text("Nombre: ${propietarioConCoches.propietario.nombre}")
-            Text("Teléfono: ${propietarioConCoches.propietario.telefono}")
+fun TabCoches(vm: ElViewModel) {
+    val coches by vm.cochesConMotor.collectAsStateWithLifecycle()
+    val propietarios by vm.allPropietarios.collectAsStateWithLifecycle()
 
-            Spacer(Modifier.height(8.dp))
-            Divider()
-            Spacer(Modifier.height(8.dp))
+    var color by remember { mutableStateOf("") }
+    var marca by remember { mutableStateOf("") }
+    var modelo by remember { mutableStateOf("") }
+    var propietarioIdSeleccionado by remember { mutableStateOf<Int?>(null) }
 
-            if (propietarioConCoches.coches.isEmpty()) {
-                Text("Sin coches registrados", style = MaterialTheme.typography.bodySmall)
-            } else {
-                Text("🚗 Coches (${propietarioConCoches.coches.size}):", style = MaterialTheme.typography.titleSmall)
-                propietarioConCoches.coches.forEach { coche ->
-                    Text("• ${coche.marca} ${coche.modelo} — ${coche.color}")
+    var cocheEditando by remember { mutableStateOf<Coche?>(null) }
+    var editColor by remember { mutableStateOf("") }
+    var editMarca by remember { mutableStateOf("") }
+    var editModelo by remember { mutableStateOf("") }
+
+    LazyColumn(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+        item {
+            Text("Nuevo coche", style = MaterialTheme.typography.titleMedium)
+            Spacer(Modifier.height(8.dp))
+            OutlinedTextField(value = color, onValueChange = { color = it }, label = { Text("Color") }, modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(value = marca, onValueChange = { marca = it }, label = { Text("Marca") }, modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(value = modelo, onValueChange = { modelo = it }, label = { Text("Modelo") }, modifier = Modifier.fillMaxWidth())
+            Spacer(Modifier.height(4.dp))
+            Text("Propietario (opcional)", style = MaterialTheme.typography.labelMedium)
+            propietarios.forEach { p ->
+                val seleccionado = propietarioIdSeleccionado == p.propietarioId
+                OutlinedButton(
+                    onClick = { propietarioIdSeleccionado = if (seleccionado) null else p.propietarioId },
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
+                    colors = if (seleccionado) ButtonDefaults.outlinedButtonColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer
+                    ) else ButtonDefaults.outlinedButtonColors()
+                ) { Text("${p.nombre} (id: ${p.propietarioId})") }
+            }
+            Spacer(Modifier.height(8.dp))
+            Button(
+                onClick = {
+                    if (color.isNotBlank() && marca.isNotBlank() && modelo.isNotBlank()) {
+                        vm.insertCoche(color, marca, modelo, propietarioIdSeleccionado)
+                        color = ""; marca = ""; modelo = ""; propietarioIdSeleccionado = null
+                    }
+                },
+                modifier = Modifier.fillMaxWidth()
+            ) { Text("Insertar coche") }
+            HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
+            Text("Coches registrados", style = MaterialTheme.typography.titleMedium)
+            Spacer(Modifier.height(8.dp))
+        }
+
+        items(coches, key = { it.coche.id }) { cocheConMotor ->
+            val coche = cocheConMotor.coche
+            Card(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), elevation = CardDefaults.cardElevation(2.dp)) {
+                Column(modifier = Modifier.padding(12.dp)) {
+                    if (cocheEditando?.id == coche.id) {
+                        OutlinedTextField(value = editColor, onValueChange = { editColor = it }, label = { Text("Color") }, modifier = Modifier.fillMaxWidth())
+                        OutlinedTextField(value = editMarca, onValueChange = { editMarca = it }, label = { Text("Marca") }, modifier = Modifier.fillMaxWidth())
+                        OutlinedTextField(value = editModelo, onValueChange = { editModelo = it }, label = { Text("Modelo") }, modifier = Modifier.fillMaxWidth())
+                        Row {
+                            Button(onClick = {
+                                vm.updateCoche(coche.copy(color = editColor, marca = editMarca, modelo = editModelo))
+                                cocheEditando = null
+                            }) { Text("Guardar") }
+                            Spacer(Modifier.width(8.dp))
+                            OutlinedButton(onClick = { cocheEditando = null }) { Text("Cancelar") }
+                        }
+                    } else {
+                        Text("${coche.marca} ${coche.modelo}", style = MaterialTheme.typography.titleSmall)
+                        Text("Color: ${coche.color}")
+                        Text("Propietario id: ${coche.propietarioId ?: "ninguno"}")
+                        Text("Motor: ${cocheConMotor.motor?.let { "${it.marca} ${it.modelo}" } ?: "sin motor"}")
+                        Row(modifier = Modifier.padding(top = 8.dp)) {
+                            OutlinedButton(onClick = {
+                                cocheEditando = coche
+                                editColor = coche.color
+                                editMarca = coche.marca
+                                editModelo = coche.modelo
+                            }) { Text("Editar") }
+                            Spacer(Modifier.width(8.dp))
+                            Button(
+                                onClick = { vm.deleteCoche(coche) },
+                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                            ) { Text("Eliminar") }
+                        }
+                    }
                 }
             }
         }
     }
 }
 
-@Composable
-fun MecanicoConCochesItem(mecanicoConCoches: MecanicosConCoche) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(8.dp),
-        elevation = CardDefaults.cardElevation(4.dp)
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text("🔩 Mecánico", style = MaterialTheme.typography.titleMedium)
-            Text("Nombre: ${mecanicoConCoches.mecanico.nombre}")
-            Text("Especialidad: ${mecanicoConCoches.mecanico.especialidad}")
-
-            Spacer(Modifier.height(8.dp))
-            Divider()
-            Spacer(Modifier.height(8.dp))
-
-            if (mecanicoConCoches.coches.isEmpty()) {
-                Text("Sin coches asignados", style = MaterialTheme.typography.bodySmall)
-            } else {
-                Text("🚗 Coches asignados (${mecanicoConCoches.coches.size}):", style = MaterialTheme.typography.titleSmall)
-                mecanicoConCoches.coches.forEach { coche ->
-                    Text("• ${coche.marca} ${coche.modelo} — ${coche.color}")
-                }
-            }
-        }
-    }
-}
 
 @Composable
-fun ListaCoches(
-    cocheDao: CocheDao,
-    propietarioDao: PropietarioDao,
-    cocheMecanicoDao: CocheMecanicoDao
-) {
-    val cochesConMotor by cocheDao.getCochesConMotor().collectAsState(initial = emptyList())
-    val propietariosConCoches by propietarioDao.getPropietariosConCoches().collectAsState(initial = emptyList())
-    val mecanicosConCoches by cocheMecanicoDao.getMecanicosConCoches().collectAsState(initial = emptyList())
+fun TabMotores(vm: ElViewModel) {
+    val motores by vm.allMotores.collectAsStateWithLifecycle()
+    val cochesConMotor by vm.cochesConMotor.collectAsStateWithLifecycle()
 
-    val scope = rememberCoroutineScope()
+    var marca by remember { mutableStateOf("") }
+    var modelo by remember { mutableStateOf("") }
+    var cilindrada by remember { mutableStateOf("") }
+    var cocheIdSeleccionado by remember { mutableStateOf<Int?>(null) }
 
-    Column {
-        Button(
-            onClick = {
-                scope.launch {
-                    val propietarioId = propietarioDao.insertPropietario(
-                        Propietario(nombre = "Juan García", telefono = "600123456")
-                    ).toInt()
+    var motorEditando by remember { mutableStateOf<Motor?>(null) }
+    var editMarca by remember { mutableStateOf("") }
+    var editModelo by remember { mutableStateOf("") }
+    var editCilindrada by remember { mutableStateOf("") }
 
-                    cocheDao.insertCocheConMotor(
-                        Coche(color = "Rojo", modelo = "Serie 3", marca = "BMW", propietarioId = propietarioId),
-                        Motor(marca = "BMW", modelo = "B58", cilindrada = 3000, cocheId = 0)
+    val cochesConMotorIds = cochesConMotor
+        .filter { it.motor != null }
+        .map { it.coche.id }
+        .toSet()
+
+    LazyColumn(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+        item {
+            Text("Nuevo motor", style = MaterialTheme.typography.titleMedium)
+            Spacer(Modifier.height(8.dp))
+            OutlinedTextField(value = marca, onValueChange = { marca = it }, label = { Text("Marca") }, modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(value = modelo, onValueChange = { modelo = it }, label = { Text("Modelo") }, modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(
+                value = cilindrada,
+                onValueChange = { cilindrada = it },
+                label = { Text("Cilindrada (cc)") },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(Modifier.height(4.dp))
+            Text("Asignar a coche (relacion 1:1)", style = MaterialTheme.typography.labelMedium)
+            cochesConMotor.forEach { ccm ->
+                val c = ccm.coche
+                val tieneMotor = c.id in cochesConMotorIds
+                val seleccionado = cocheIdSeleccionado == c.id
+                OutlinedButton(
+                    onClick = {
+                        if (!tieneMotor) {
+                            cocheIdSeleccionado = if (seleccionado) null else c.id
+                        }
+                    },
+                    enabled = !tieneMotor || seleccionado,
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
+                    colors = if (seleccionado) ButtonDefaults.outlinedButtonColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer
+                    ) else ButtonDefaults.outlinedButtonColors()
+                ) {
+                    Text(
+                        if (tieneMotor) "${c.marca} ${c.modelo} (ya tiene motor)"
+                        else "${c.marca} ${c.modelo} (id: ${c.id})"
                     )
                 }
-            },
-            modifier = Modifier.padding(8.dp)
-        ) {
-            Text("Agregar datos de prueba")
+            }
+            Spacer(Modifier.height(8.dp))
+            Button(
+                onClick = {
+                    val cc = cilindrada.toIntOrNull()
+                    val cid = cocheIdSeleccionado
+                    if (marca.isNotBlank() && modelo.isNotBlank() && cc != null && cid != null) {
+                        vm.insertMotor(marca, modelo, cc, cid)
+                        marca = ""; modelo = ""; cilindrada = ""; cocheIdSeleccionado = null
+                    }
+                },
+                modifier = Modifier.fillMaxWidth()
+            ) { Text("Insertar motor") }
+            HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
+            Text("Motores registrados", style = MaterialTheme.typography.titleMedium)
+            Spacer(Modifier.height(8.dp))
         }
 
-        LazyColumn {
-            item {
-                Text(
-                    "🔗 Coches con Motor (1:1)",
-                    style = MaterialTheme.typography.titleLarge,
-                    modifier = Modifier.padding(start = 8.dp, top = 16.dp, bottom = 4.dp)
-                )
+        items(motores, key = { it.id }) { motor ->
+            Card(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), elevation = CardDefaults.cardElevation(2.dp)) {
+                Column(modifier = Modifier.padding(12.dp)) {
+                    if (motorEditando?.id == motor.id) {
+                        OutlinedTextField(value = editMarca, onValueChange = { editMarca = it }, label = { Text("Marca") }, modifier = Modifier.fillMaxWidth())
+                        OutlinedTextField(value = editModelo, onValueChange = { editModelo = it }, label = { Text("Modelo") }, modifier = Modifier.fillMaxWidth())
+                        OutlinedTextField(
+                            value = editCilindrada,
+                            onValueChange = { editCilindrada = it },
+                            label = { Text("Cilindrada (cc)") },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Row {
+                            Button(onClick = {
+                                val cc = editCilindrada.toIntOrNull() ?: motor.cilindrada
+                                vm.updateMotor(motor.copy(marca = editMarca, modelo = editModelo, cilindrada = cc))
+                                motorEditando = null
+                            }) { Text("Guardar") }
+                            Spacer(Modifier.width(8.dp))
+                            OutlinedButton(onClick = { motorEditando = null }) { Text("Cancelar") }
+                        }
+                    } else {
+                        Text("${motor.marca} ${motor.modelo}", style = MaterialTheme.typography.titleSmall)
+                        Text("Cilindrada: ${motor.cilindrada} cc")
+                        Text("Coche id: ${motor.cocheId}")
+                        Row(modifier = Modifier.padding(top = 8.dp)) {
+                            OutlinedButton(onClick = {
+                                motorEditando = motor
+                                editMarca = motor.marca
+                                editModelo = motor.modelo
+                                editCilindrada = motor.cilindrada.toString()
+                            }) { Text("Editar") }
+                            Spacer(Modifier.width(8.dp))
+                            Button(
+                                onClick = { vm.deleteMotor(motor) },
+                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                            ) { Text("Eliminar") }
+                        }
+                    }
+                }
             }
-            items(cochesConMotor) { cocheConMotor ->
-                CocheConMotorItem(cocheConMotor = cocheConMotor)
-            }
+        }
+    }
+}
 
-            item {
-                Text(
-                    "👤 Propietarios con Coches (1:N)",
-                    style = MaterialTheme.typography.titleLarge,
-                    modifier = Modifier.padding(start = 8.dp, top = 16.dp, bottom = 4.dp)
-                )
-            }
-            items(propietariosConCoches) { propietarioConCoches ->
-                PropietarioConCochesItem(propietarioConCoches = propietarioConCoches)
-            }
 
-            item {
-                Text(
-                    "🔩 Mecánicos con Coches (N:M)",
-                    style = MaterialTheme.typography.titleLarge,
-                    modifier = Modifier.padding(start = 8.dp, top = 16.dp, bottom = 4.dp)
-                )
+@Composable
+fun TabPropietarios(vm: ElViewModel) {
+    val propietariosConCoches by vm.propietariosConCoches.collectAsStateWithLifecycle()
+
+    var nombre by remember { mutableStateOf("") }
+    var telefono by remember { mutableStateOf("") }
+
+    var propietarioEditando by remember { mutableStateOf<Propietario?>(null) }
+    var editNombre by remember { mutableStateOf("") }
+    var editTelefono by remember { mutableStateOf("") }
+
+    LazyColumn(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+        item {
+            Text("Nuevo propietario", style = MaterialTheme.typography.titleMedium)
+            Spacer(Modifier.height(8.dp))
+            OutlinedTextField(value = nombre, onValueChange = { nombre = it }, label = { Text("Nombre") }, modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(
+                value = telefono,
+                onValueChange = { telefono = it },
+                label = { Text("Telefono") },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(Modifier.height(8.dp))
+            Button(
+                onClick = {
+                    if (nombre.isNotBlank() && telefono.isNotBlank()) {
+                        vm.insertPropietario(nombre, telefono)
+                        nombre = ""; telefono = ""
+                    }
+                },
+                modifier = Modifier.fillMaxWidth()
+            ) { Text("Insertar propietario") }
+            HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
+            Text("Propietarios registrados", style = MaterialTheme.typography.titleMedium)
+            Spacer(Modifier.height(8.dp))
+        }
+
+        items(propietariosConCoches, key = { it.propietario.propietarioId }) { propietarioConCoches ->
+            val propietario = propietarioConCoches.propietario
+            Card(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), elevation = CardDefaults.cardElevation(2.dp)) {
+                Column(modifier = Modifier.padding(12.dp)) {
+                    if (propietarioEditando?.propietarioId == propietario.propietarioId) {
+                        OutlinedTextField(value = editNombre, onValueChange = { editNombre = it }, label = { Text("Nombre") }, modifier = Modifier.fillMaxWidth())
+                        OutlinedTextField(value = editTelefono, onValueChange = { editTelefono = it }, label = { Text("Telefono") }, modifier = Modifier.fillMaxWidth())
+                        Row {
+                            Button(onClick = {
+                                vm.updatePropietario(propietario.copy(nombre = editNombre, telefono = editTelefono))
+                                propietarioEditando = null
+                            }) { Text("Guardar") }
+                            Spacer(Modifier.width(8.dp))
+                            OutlinedButton(onClick = { propietarioEditando = null }) { Text("Cancelar") }
+                        }
+                    } else {
+                        Text(propietario.nombre, style = MaterialTheme.typography.titleSmall)
+                        Text("Telefono: ${propietario.telefono}")
+                        if (propietarioConCoches.coches.isEmpty()) {
+                            Text("Sin coches", style = MaterialTheme.typography.bodySmall)
+                        } else {
+                            Text("Coches: ${propietarioConCoches.coches.joinToString { "${it.marca} ${it.modelo}" }}")
+                        }
+                        Row(modifier = Modifier.padding(top = 8.dp)) {
+                            OutlinedButton(onClick = {
+                                propietarioEditando = propietario
+                                editNombre = propietario.nombre
+                                editTelefono = propietario.telefono
+                            }) { Text("Editar") }
+                            Spacer(Modifier.width(8.dp))
+                            Button(
+                                onClick = { vm.deletePropietario(propietario) },
+                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                            ) { Text("Eliminar") }
+                        }
+                    }
+                }
             }
-            items(mecanicosConCoches) { mecanicoConCoches ->
-                MecanicoConCochesItem(mecanicoConCoches = mecanicoConCoches)
+        }
+    }
+}
+
+
+@Composable
+fun TabMecanicos(vm: ElViewModel) {
+    val mecanicosConCoches by vm.mecanicosConCoches.collectAsStateWithLifecycle()
+
+    var nombre by remember { mutableStateOf("") }
+    var especialidad by remember { mutableStateOf("") }
+
+    var mecanicoEditando by remember { mutableStateOf<Mecanico?>(null) }
+    var editNombre by remember { mutableStateOf("") }
+    var editEspecialidad by remember { mutableStateOf("") }
+
+    LazyColumn(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+        item {
+            Text("Nuevo mecanico", style = MaterialTheme.typography.titleMedium)
+            Spacer(Modifier.height(8.dp))
+            OutlinedTextField(value = nombre, onValueChange = { nombre = it }, label = { Text("Nombre") }, modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(value = especialidad, onValueChange = { especialidad = it }, label = { Text("Especialidad") }, modifier = Modifier.fillMaxWidth())
+            Spacer(Modifier.height(8.dp))
+            Button(
+                onClick = {
+                    if (nombre.isNotBlank() && especialidad.isNotBlank()) {
+                        vm.insertMecanico(nombre, especialidad)
+                        nombre = ""; especialidad = ""
+                    }
+                },
+                modifier = Modifier.fillMaxWidth()
+            ) { Text("Insertar mecanico") }
+            HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
+            Text("Mecanicos registrados", style = MaterialTheme.typography.titleMedium)
+            Spacer(Modifier.height(8.dp))
+        }
+
+        items(mecanicosConCoches, key = { it.mecanico.id }) { mecanicoConCoches ->
+            val mecanico = mecanicoConCoches.mecanico
+            Card(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), elevation = CardDefaults.cardElevation(2.dp)) {
+                Column(modifier = Modifier.padding(12.dp)) {
+                    if (mecanicoEditando?.id == mecanico.id) {
+                        OutlinedTextField(value = editNombre, onValueChange = { editNombre = it }, label = { Text("Nombre") }, modifier = Modifier.fillMaxWidth())
+                        OutlinedTextField(value = editEspecialidad, onValueChange = { editEspecialidad = it }, label = { Text("Especialidad") }, modifier = Modifier.fillMaxWidth())
+                        Row {
+                            Button(onClick = {
+                                vm.updateMecanico(mecanico.copy(nombre = editNombre, especialidad = editEspecialidad))
+                                mecanicoEditando = null
+                            }) { Text("Guardar") }
+                            Spacer(Modifier.width(8.dp))
+                            OutlinedButton(onClick = { mecanicoEditando = null }) { Text("Cancelar") }
+                        }
+                    } else {
+                        Text(mecanico.nombre, style = MaterialTheme.typography.titleSmall)
+                        Text("Especialidad: ${mecanico.especialidad}")
+                        if (mecanicoConCoches.coches.isEmpty()) {
+                            Text("Sin coches asignados", style = MaterialTheme.typography.bodySmall)
+                        } else {
+                            Text("Coches: ${mecanicoConCoches.coches.joinToString { "${it.marca} ${it.modelo}" }}")
+                        }
+                        Row(modifier = Modifier.padding(top = 8.dp)) {
+                            OutlinedButton(onClick = {
+                                mecanicoEditando = mecanico
+                                editNombre = mecanico.nombre
+                                editEspecialidad = mecanico.especialidad
+                            }) { Text("Editar") }
+                            Spacer(Modifier.width(8.dp))
+                            Button(
+                                onClick = { vm.deleteMecanico(mecanico) },
+                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                            ) { Text("Eliminar") }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+@Composable
+fun TabAsignaciones(vm: ElViewModel) {
+    val cochesConMecanicos by vm.cochesConMecanicos.collectAsStateWithLifecycle()
+    val mecanicos by vm.allMecanicos.collectAsStateWithLifecycle()
+
+    LazyColumn(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+        item {
+            Text("Asignaciones coche - mecanico (N:M)", style = MaterialTheme.typography.titleMedium)
+            Text("Selecciona un mecanico para asignarlo o desasignarlo de cada coche.", style = MaterialTheme.typography.bodySmall)
+            HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
+        }
+
+        items(cochesConMecanicos, key = { it.coche.id }) { cocheConMecanicos ->
+            val coche = cocheConMecanicos.coche
+            val mecanicoIdsAsignados = cocheConMecanicos.mecanicos.map { it.id }.toSet()
+
+            Card(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), elevation = CardDefaults.cardElevation(2.dp)) {
+                Column(modifier = Modifier.padding(12.dp)) {
+                    Text("${coche.marca} ${coche.modelo}", style = MaterialTheme.typography.titleSmall)
+                    Text("Color: ${coche.color}")
+                    Spacer(Modifier.height(8.dp))
+                    Text("Mecanicos disponibles:", style = MaterialTheme.typography.labelMedium)
+                    mecanicos.forEach { mecanico ->
+                        val asignado = mecanico.id in mecanicoIdsAsignados
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                "${mecanico.nombre} - ${mecanico.especialidad}",
+                                modifier = Modifier.weight(1f).padding(end = 8.dp),
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                            if (asignado) {
+                                Button(
+                                    onClick = { vm.deleteCocheMecanicoCrossRef(coche.id, mecanico.id) },
+                                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                                ) { Text("Desasignar") }
+                            } else {
+                                Button(
+                                    onClick = { vm.insertCocheMecanicoCrossRef(coche.id, mecanico.id) }
+                                ) { Text("Asignar") }
+                            }
+                        }
+                    }
+                }
             }
         }
     }
