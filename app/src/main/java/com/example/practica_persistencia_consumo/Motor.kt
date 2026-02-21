@@ -1,15 +1,11 @@
 package com.example.practica_persistencia_consumo
-import android.content.Context
 import androidx.room.Dao
-import androidx.room.Database
 import androidx.room.Delete
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Insert
 import androidx.room.PrimaryKey
 import androidx.room.Query
-import androidx.room.Room
-import androidx.room.RoomDatabase
 import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
 
@@ -42,7 +38,7 @@ data class Motor (
 @Dao
 interface MotorDao {
     @Insert
-    suspend fun insert(Motor: Motor)
+    suspend fun insert(motor: Motor)
 
     @Query("SELECT * FROM motor")
     fun getAllMotores(): Flow<List<Motor>>
@@ -51,32 +47,28 @@ interface MotorDao {
     fun getMotorById(id: Int): Flow<List<Motor>>
 
     @Delete
-    suspend fun deleteMotor(Motor: Motor)
+    suspend fun deleteMotor(motor: Motor)
 
     @Update
-    suspend fun updateMotor(Motor: Motor)
+    suspend fun updateMotor(motor: Motor)
 
 }
 
-class MotorRepsoitory(private val MotorDao:MotorDao){
+class MotorRepository(private val motorDao:MotorDao){
     suspend fun insert(motor: Motor) {
-        MotorDao.insert(motor)
+        motorDao.insert(motor)
     }
 
-    fun getAllMotores(): Flow<List<Motor>> = MotorDao.getAllMotores()
+    fun getAllMotores(): Flow<List<Motor>> = motorDao.getAllMotores()
 
-    fun getMotorById(id : Int): Flow<List<Motor>> = MotorDao.getMotorById(id)
+    fun getMotorById(id : Int): Flow<List<Motor>> = motorDao.getMotorById(id)
 
-    suspend fun deleteMotor(Motor: Motor){
-        MotorDao.deleteMotor(Motor)
+    suspend fun deleteMotor(motor: Motor){
+        motorDao.deleteMotor(motor)
     }
 
-    suspend fun updateMotor(Motor: Motor){
-        MotorDao.updateMotor(Motor)
+    suspend fun updateMotor(motor: Motor){
+        motorDao.updateMotor(motor)
     }
 
 }
-
-
-
-

@@ -6,7 +6,7 @@ import androidx.room.PrimaryKey
 import androidx.room.Relation
 
 @Entity(tableName = "propietario")
- data class Propietario (
+data class Propietario (
 
     @PrimaryKey(autoGenerate = true) val propietarioId: Int = 0,
     val nombre: String,

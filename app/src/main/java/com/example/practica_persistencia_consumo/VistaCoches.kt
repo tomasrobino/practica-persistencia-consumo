@@ -33,13 +33,13 @@ fun CocheItem(coche: Coche) {
 }
 
 @Composable
-fun ListaCoches(cocheRepository: CocheRepository) {
-    val coches by cocheRepository.getAllCoches().collectAsState(initial = emptyList())
+fun ListaCoches(cocheDao: CocheDao) {
+    val coches by cocheDao.getAllCoches().collectAsState(initial = emptyList())
     val scope = rememberCoroutineScope()
     Column() {
         Button(onClick = {
             scope.launch {
-                cocheRepository.insertCoche(
+                cocheDao.insert(
                     Coche(color = "fdsfds", modelo = "fdsfsdf", marca = "sddsad")
                 )
             }

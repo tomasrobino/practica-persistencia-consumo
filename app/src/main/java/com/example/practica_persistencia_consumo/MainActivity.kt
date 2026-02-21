@@ -28,6 +28,5 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun Padre() {
     val cocheDao = ConcesionarioDatabase.getDatabase(LocalContext.current).cocheDao()
-    val repository = CocheRepository(cocheDao)
-    ListaCoches(repository)
+    ListaCoches(cocheDao)
 }

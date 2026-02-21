@@ -32,13 +32,6 @@ interface CocheDao {
     fun getAllCoches(): Flow<List<Coche>>
 }
 
-class CocheRepository(private val cocheDao: CocheDao) {
-    fun getAllCoches(): Flow<List<Coche>> = cocheDao.getAllCoches()
-    suspend fun insertCoche(coche: Coche) {
-        cocheDao.insert(coche)
-    }
-}
-
 //Tabla relacional de muchos a muchos
 @Entity(primaryKeys = ["cocheId", "mecanicoId"])
 data class CocheMecanicoCrossRef(
@@ -84,4 +77,3 @@ abstract class ConcesionarioDatabase: RoomDatabase() {
         }
     }
 }
-
