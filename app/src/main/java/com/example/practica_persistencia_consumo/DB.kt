@@ -10,7 +10,7 @@ import androidx.room.RoomDatabase
     Motor::class,
     Propietario::class,
     Mecanico::class,
-    CocheMecanicoCrossRef::class], version = 1, exportSchema = false)
+    CocheMecanicoCrossRef::class], version = 2, exportSchema = false)
 
 abstract class ConcesionarioDatabase: RoomDatabase() {
     abstract fun cocheDao(): CocheDao
@@ -22,10 +22,10 @@ abstract class ConcesionarioDatabase: RoomDatabase() {
         fun getDatabase(context: Context): ConcesionarioDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
-                    context.applicationContext,
-                    ConcesionarioDatabase::class.java,
-                    "concesionario_database"
-                ).build()
+                                context.applicationContext,
+                                ConcesionarioDatabase::class.java,
+                                "concesionario_database"
+                            ).fallbackToDestructiveMigration(true).build()
                 INSTANCE = instance
                 return instance
             }

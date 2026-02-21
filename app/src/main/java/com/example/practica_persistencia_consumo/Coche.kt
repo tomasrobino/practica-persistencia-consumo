@@ -9,6 +9,7 @@ import androidx.room.Junction
 import androidx.room.PrimaryKey
 import androidx.room.Query
 import androidx.room.Relation
+import androidx.room.Transaction
 import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
 
@@ -18,7 +19,7 @@ data class Coche(
     val color: String,
     val marca: String,
     val modelo: String,
-    val propietarioId: Int? = null // <--- CONEXIÓN CON PROPIETARIO
+    val propietarioId: Int? = null
 )
 
 @Dao
@@ -30,14 +31,33 @@ interface CocheDao {
     fun getAllCoches(): Flow<List<Coche>>
 
     @Query("SELECT * FROM coches WHERE id = :id")
-    fun getCocheById(id: Int): Flow<List<Coche>>
+    fun getCocheById(id: Int): Flow<Coche?>
 
     @Delete
     suspend fun deleteCoche(coche: Coche)
 
     @Update
     suspend fun updateCoche(coche: Coche)
+
+    @Transaction
+    @Query("SELECT * FROM coches")
+    fun getCochesConMotor(): Flow<List<CocheConMotor>>
+
+    @Transaction
+    @Query("SELECT * FROM coches WHERE id = :id")
+    fun getCocheConMotorById(id: Int): Flow<CocheConMotor?>
 }
+
+// Relacion 1 a 1 con Motor
+data class CocheConMotor(
+    @Embedded val coche: Coche,
+
+    @Relation(
+        parentColumn = "id",
+        entityColumn = "cocheId"
+    )
+    val motor: Motor?
+)
 
 //Tabla relacional de muchos a muchos
 @Entity(primaryKeys = ["cocheId", "mecanicoId"])
