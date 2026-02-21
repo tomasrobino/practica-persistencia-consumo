@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Embedded
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.Insert
 import androidx.room.Junction
 import androidx.room.PrimaryKey
@@ -31,15 +32,9 @@ interface CocheDao {
     suspend fun insertMotor(motor: Motor)
 
     @Transaction
-    suspend fun insertCocheConMotor(
-        coche: Coche,
-        motor: Motor
-    ) {
+    suspend fun insertCocheConMotor(coche: Coche, motor: Motor) {
         val cocheId = insert(coche).toInt()
-
-        val motorConId = motor.copy(cocheId = cocheId)
-
-        insertMotor(motorConId)
+        insertMotor(motor.copy(cocheId = cocheId))
     }
 
     @Query("SELECT * FROM coches")
@@ -63,10 +58,8 @@ interface CocheDao {
     fun getCocheConMotorById(id: Int): Flow<CocheConMotor?>
 }
 
-// Relacion 1 a 1 con Motor
 data class CocheConMotor(
     @Embedded val coche: Coche,
-
     @Relation(
         parentColumn = "id",
         entityColumn = "cocheId"
@@ -74,20 +67,25 @@ data class CocheConMotor(
     val motor: Motor?
 )
 
-//Tabla relacional de muchos a muchos
-@Entity(primaryKeys = ["cocheId", "mecanicoId"])
+@Entity(
+    primaryKeys = ["cocheId", "mecanicoId"],
+    indices = [Index("mecanicoId")]
+)
 data class CocheMecanicoCrossRef(
     val cocheId: Int,
     val mecanicoId: Int
 )
 
-//Clase que relaciona Coches con Mecanicos.
 data class CocheConMecanicos(
     @Embedded val coche: Coche,
     @Relation(
         parentColumn = "id",
         entityColumn = "id",
-        associateBy = Junction(CocheMecanicoCrossRef::class) // La tabla cruzada
+        associateBy = Junction(
+            value = CocheMecanicoCrossRef::class,
+            parentColumn = "cocheId",
+            entityColumn = "mecanicoId"
+        )
     )
     val mecanicos: List<Mecanico>
 )

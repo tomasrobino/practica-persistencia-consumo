@@ -10,7 +10,7 @@ import androidx.room.RoomDatabase
     Motor::class,
     Propietario::class,
     Mecanico::class,
-    CocheMecanicoCrossRef::class], version = 4, exportSchema = false)
+    CocheMecanicoCrossRef::class], version = 5, exportSchema = false)
 
 abstract class ConcesionarioDatabase: RoomDatabase() {
     abstract fun cocheDao(): CocheDao
