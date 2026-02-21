@@ -65,6 +65,8 @@ fun PantallaPrincipal(vm: ElViewModel) {
 }
 
 
+// TAB COCHES
+
 @Composable
 fun TabCoches(vm: ElViewModel) {
     val coches by vm.cochesConMotor.collectAsStateWithLifecycle()
@@ -155,6 +157,8 @@ fun TabCoches(vm: ElViewModel) {
     }
 }
 
+
+// TAB MOTORES
 
 @Composable
 fun TabMotores(vm: ElViewModel) {
@@ -257,6 +261,8 @@ fun TabMotores(vm: ElViewModel) {
 }
 
 
+// TAB PROPIETARIOS
+
 @Composable
 fun TabPropietarios(vm: ElViewModel) {
     val propietariosConCoches by vm.propietariosConCoches.collectAsStateWithLifecycle()
@@ -342,6 +348,8 @@ fun TabPropietarios(vm: ElViewModel) {
 }
 
 
+// TAB MECÁNICOS
+
 @Composable
 fun TabMecanicos(vm: ElViewModel) {
     val mecanicosConCoches by vm.mecanicosConCoches.collectAsStateWithLifecycle()
@@ -417,6 +425,8 @@ fun TabMecanicos(vm: ElViewModel) {
 }
 
 
+// TAB ASIGNACIONES
+
 @Composable
 fun TabAsignaciones(vm: ElViewModel) {
     val cochesConMecanicos by vm.cochesConMecanicos.collectAsStateWithLifecycle()
@@ -469,105 +479,146 @@ fun TabAsignaciones(vm: ElViewModel) {
 }
 
 
-// ─────────────────────────── NUEVA TAB: API SYNC ──────────────────────────────
+// TAB API SYNC — entrada principal con sub-tabs por entidad
 
 @Composable
 fun TabApiSync(vm: ElViewModel) {
     val syncStatus by vm.syncStatus.collectAsStateWithLifecycle()
+    val sections = listOf("Coches", "Motores", "Propietarios", "Mecánicos", "Asignaciones")
+    var seccionActiva by remember { mutableIntStateOf(0) }
+
+    Column(modifier = Modifier.fillMaxSize()) {
+        SyncStatusBanner(syncStatus) { vm.clearSyncStatus() }
+        ScrollableTabRow(selectedTabIndex = seccionActiva) {
+            sections.forEachIndexed { i, label ->
+                Tab(selected = seccionActiva == i, onClick = { seccionActiva = i }, text = { Text(label) })
+            }
+        }
+        when (seccionActiva) {
+            0 -> ApiSyncCoches(vm)
+            1 -> ApiSyncMotores(vm)
+            2 -> ApiSyncPropietarios(vm)
+            3 -> ApiSyncMecanicos(vm)
+            4 -> ApiSyncAsignaciones(vm)
+        }
+    }
+}
+
+
+@Composable
+fun SyncStatusBanner(status: SyncStatus, onDismiss: () -> Unit) {
+    when (status) {
+        is SyncStatus.Idle -> {}
+        is SyncStatus.Loading -> Card(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
+        ) {
+            Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                CircularProgressIndicator(modifier = Modifier.padding(end = 12.dp))
+                Text(status.message)
+            }
+        }
+        is SyncStatus.Success -> Card(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFFD4EDDA))
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(12.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text("✅ ${status.message}", modifier = Modifier.weight(1f))
+                OutlinedButton(onClick = onDismiss) { Text("OK") }
+            }
+        }
+        is SyncStatus.Error -> Card(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFFF8D7DA))
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(12.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text("❌ ${status.message}", modifier = Modifier.weight(1f))
+                OutlinedButton(onClick = onDismiss) { Text("OK") }
+            }
+        }
+    }
+}
+
+@Composable
+fun SectionDivider(title: String) {
+    HorizontalDivider(modifier = Modifier.padding(vertical = 10.dp))
+    Text(title, style = MaterialTheme.typography.titleSmall)
+    Spacer(Modifier.height(6.dp))
+}
+
+/** Tarjeta reutilizable con botones PUT/DELETE inline y campos de edición custom */
+@Composable
+fun ApiEntityCard(
+    title: String,
+    subtitle: String,
+    isSelected: Boolean,
+    onSelect: () -> Unit,
+    onCancel: () -> Unit,
+    onPut: () -> Unit,
+    onDelete: () -> Unit,
+    editFields: @Composable () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+        elevation = CardDefaults.cardElevation(if (isSelected) 6.dp else 2.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer
+            else MaterialTheme.colorScheme.surface
+        )
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            Text(title, style = MaterialTheme.typography.titleSmall)
+            Text(subtitle, style = MaterialTheme.typography.bodySmall)
+            if (isSelected) {
+                Spacer(Modifier.height(8.dp))
+                editFields()
+                Spacer(Modifier.height(8.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Button(onClick = onPut, modifier = Modifier.weight(1f)) { Text("PUT → Actualizar") }
+                    Button(
+                        onClick = onDelete,
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                    ) { Text("DELETE") }
+                }
+                OutlinedButton(onClick = onCancel, modifier = Modifier.fillMaxWidth()) { Text("Cancelar") }
+            } else {
+                Spacer(Modifier.height(4.dp))
+                OutlinedButton(onClick = onSelect, modifier = Modifier.fillMaxWidth()) {
+                    Text("Seleccionar para editar / borrar")
+                }
+            }
+        }
+    }
+}
+
+
+// API SYNC — COCHES
+
+@Composable
+fun ApiSyncCoches(vm: ElViewModel) {
     val coches by vm.allCoches.collectAsStateWithLifecycle()
 
-    // Campos para POST de un coche nuevo vía API
     var postColor by remember { mutableStateOf("") }
     var postMarca by remember { mutableStateOf("") }
     var postModelo by remember { mutableStateOf("") }
-
-    // Selección de coche para PUT/DELETE
-    var cocheSeleccionado by remember { mutableStateOf<Coche?>(null) }
+    var seleccionado by remember { mutableStateOf<Coche?>(null) }
     var editColor by remember { mutableStateOf("") }
     var editMarca by remember { mutableStateOf("") }
     var editModelo by remember { mutableStateOf("") }
 
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-
-        // ── Banner de estado ──────────────────────────────────────────────────
+    LazyColumn(modifier = Modifier.fillMaxSize().padding(16.dp)) {
         item {
-            when (val s = syncStatus) {
-                is SyncStatus.Idle -> {}
-                is SyncStatus.Loading -> {
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(12.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            CircularProgressIndicator(modifier = Modifier.padding(end = 12.dp))
-                            Text(s.message)
-                        }
-                    }
-                }
-                is SyncStatus.Success -> {
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(containerColor = Color(0xFFD4EDDA))
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth().padding(12.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text("✅ ${s.message}", modifier = Modifier.weight(1f))
-                            OutlinedButton(onClick = { vm.clearSyncStatus() }) { Text("OK") }
-                        }
-                    }
-                }
-                is SyncStatus.Error -> {
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(containerColor = Color(0xFFF8D7DA))
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth().padding(12.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text("❌ ${s.message}", modifier = Modifier.weight(1f))
-                            OutlinedButton(onClick = { vm.clearSyncStatus() }) { Text("OK") }
-                        }
-                    }
-                }
-            }
-            Spacer(Modifier.height(12.dp))
-        }
-
-        // ── GET: Sincronizar todo ─────────────────────────────────────────────
-        item {
-            Text("GET — Sincronizar con la API", style = MaterialTheme.typography.titleMedium)
-            Spacer(Modifier.height(8.dp))
-            Button(onClick = { vm.syncAll() }, modifier = Modifier.fillMaxWidth()) {
-                Text("🔄  Sync ALL (propietarios + coches + motores + mecánicos)")
-            }
-            Spacer(Modifier.height(4.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(onClick = { vm.fetchCoches() }, modifier = Modifier.weight(1f)) { Text("GET /coches") }
-                OutlinedButton(onClick = { vm.fetchMotores() }, modifier = Modifier.weight(1f)) { Text("GET /motores") }
-            }
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(onClick = { vm.fetchPropietarios() }, modifier = Modifier.weight(1f)) { Text("GET /propietarios") }
-                OutlinedButton(onClick = { vm.fetchMecanicos() }, modifier = Modifier.weight(1f)) { Text("GET /mecánicos") }
-            }
-            HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
-        }
-
-        // ── POST: Crear coche ─────────────────────────────────────────────────
-        item {
-            Text("POST /coches — Crear coche en la API", style = MaterialTheme.typography.titleMedium)
-            Spacer(Modifier.height(8.dp))
+            Button(onClick = { vm.fetchCoches() }, modifier = Modifier.fillMaxWidth()) { Text("🔄  GET /coches") }
+            SectionDivider("POST /coches — Crear coche")
             OutlinedTextField(value = postColor, onValueChange = { postColor = it }, label = { Text("Color") }, modifier = Modifier.fillMaxWidth())
             OutlinedTextField(value = postMarca, onValueChange = { postMarca = it }, label = { Text("Marca") }, modifier = Modifier.fillMaxWidth())
             OutlinedTextField(value = postModelo, onValueChange = { postModelo = it }, label = { Text("Modelo") }, modifier = Modifier.fillMaxWidth())
@@ -580,68 +631,261 @@ fun TabApiSync(vm: ElViewModel) {
                     }
                 },
                 modifier = Modifier.fillMaxWidth()
-            ) { Text("POST → Crear coche") }
-            HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
+            ) { Text("POST → Crear") }
+            SectionDivider("PUT / DELETE — Selecciona un coche")
         }
-
-        // ── PUT / DELETE: Selecciona un coche ─────────────────────────────────
-        item {
-            Text("PUT / DELETE — Selecciona un coche", style = MaterialTheme.typography.titleMedium)
-            Spacer(Modifier.height(4.dp))
-        }
-
         items(coches, key = { it.id }) { coche ->
-            val seleccionado = cocheSeleccionado?.id == coche.id
-            Card(
-                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                elevation = CardDefaults.cardElevation(if (seleccionado) 6.dp else 2.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = if (seleccionado) MaterialTheme.colorScheme.primaryContainer
-                    else MaterialTheme.colorScheme.surface
-                )
+            ApiEntityCard(
+                title = "${coche.marca} ${coche.modelo}",
+                subtitle = "Color: ${coche.color}  |  id: ${coche.id}",
+                isSelected = seleccionado?.id == coche.id,
+                onSelect = { seleccionado = coche; editColor = coche.color; editMarca = coche.marca; editModelo = coche.modelo },
+                onCancel = { seleccionado = null },
+                onPut = { vm.apiUpdateCoche(coche.copy(color = editColor, marca = editMarca, modelo = editModelo)); seleccionado = null },
+                onDelete = { vm.apiDeleteCoche(coche); seleccionado = null }
             ) {
+                OutlinedTextField(value = editColor, onValueChange = { editColor = it }, label = { Text("Color") }, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(value = editMarca, onValueChange = { editMarca = it }, label = { Text("Marca") }, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(value = editModelo, onValueChange = { editModelo = it }, label = { Text("Modelo") }, modifier = Modifier.fillMaxWidth())
+            }
+        }
+    }
+}
+
+
+// API SYNC — MOTORES
+
+@Composable
+fun ApiSyncMotores(vm: ElViewModel) {
+    val motores by vm.allMotores.collectAsStateWithLifecycle()
+    val coches by vm.allCoches.collectAsStateWithLifecycle()
+
+    var postMarca by remember { mutableStateOf("") }
+    var postModelo by remember { mutableStateOf("") }
+    var postCilindrada by remember { mutableStateOf("") }
+    var postCocheId by remember { mutableStateOf<Int?>(null) }
+    var seleccionado by remember { mutableStateOf<Motor?>(null) }
+    var editMarca by remember { mutableStateOf("") }
+    var editModelo by remember { mutableStateOf("") }
+    var editCilindrada by remember { mutableStateOf("") }
+
+    LazyColumn(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+        item {
+            Button(onClick = { vm.fetchMotores() }, modifier = Modifier.fillMaxWidth()) { Text("🔄  GET /motores") }
+            SectionDivider("POST /motores — Crear motor")
+            OutlinedTextField(value = postMarca, onValueChange = { postMarca = it }, label = { Text("Marca") }, modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(value = postModelo, onValueChange = { postModelo = it }, label = { Text("Modelo") }, modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(
+                value = postCilindrada, onValueChange = { postCilindrada = it },
+                label = { Text("Cilindrada (cc)") },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(Modifier.height(4.dp))
+            Text("Coche al que pertenece:", style = MaterialTheme.typography.labelMedium)
+            coches.forEach { c ->
+                OutlinedButton(
+                    onClick = { postCocheId = c.id },
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
+                    colors = if (postCocheId == c.id) ButtonDefaults.outlinedButtonColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+                    else ButtonDefaults.outlinedButtonColors()
+                ) { Text("${c.marca} ${c.modelo} (id: ${c.id})") }
+            }
+            Spacer(Modifier.height(8.dp))
+            Button(
+                onClick = {
+                    val cc = postCilindrada.toIntOrNull()
+                    if (postMarca.isNotBlank() && postModelo.isNotBlank() && cc != null && postCocheId != null) {
+                        vm.apiCreateMotor(postMarca, postModelo, cc, postCocheId!!)
+                        postMarca = ""; postModelo = ""; postCilindrada = ""; postCocheId = null
+                    }
+                },
+                modifier = Modifier.fillMaxWidth()
+            ) { Text("POST → Crear") }
+            SectionDivider("PUT / DELETE — Selecciona un motor")
+        }
+        items(motores, key = { it.id }) { motor ->
+            ApiEntityCard(
+                title = "${motor.marca} ${motor.modelo}",
+                subtitle = "${motor.cilindrada} cc  |  coche id: ${motor.cocheId}  |  id: ${motor.id}",
+                isSelected = seleccionado?.id == motor.id,
+                onSelect = { seleccionado = motor; editMarca = motor.marca; editModelo = motor.modelo; editCilindrada = motor.cilindrada.toString() },
+                onCancel = { seleccionado = null },
+                onPut = {
+                    val cc = editCilindrada.toIntOrNull() ?: motor.cilindrada
+                    vm.apiUpdateMotor(motor.copy(marca = editMarca, modelo = editModelo, cilindrada = cc))
+                    seleccionado = null
+                },
+                onDelete = { vm.apiDeleteMotor(motor); seleccionado = null }
+            ) {
+                OutlinedTextField(value = editMarca, onValueChange = { editMarca = it }, label = { Text("Marca") }, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(value = editModelo, onValueChange = { editModelo = it }, label = { Text("Modelo") }, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(
+                    value = editCilindrada, onValueChange = { editCilindrada = it },
+                    label = { Text("Cilindrada") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        }
+    }
+}
+
+
+// API SYNC — PROPIETARIOS
+
+@Composable
+fun ApiSyncPropietarios(vm: ElViewModel) {
+    val propietarios by vm.allPropietarios.collectAsStateWithLifecycle()
+
+    var postNombre by remember { mutableStateOf("") }
+    var postTelefono by remember { mutableStateOf("") }
+    var seleccionado by remember { mutableStateOf<Propietario?>(null) }
+    var editNombre by remember { mutableStateOf("") }
+    var editTelefono by remember { mutableStateOf("") }
+
+    LazyColumn(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+        item {
+            Button(onClick = { vm.fetchPropietarios() }, modifier = Modifier.fillMaxWidth()) { Text("🔄  GET /propietarios") }
+            SectionDivider("POST /propietarios — Crear propietario")
+            OutlinedTextField(value = postNombre, onValueChange = { postNombre = it }, label = { Text("Nombre") }, modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(
+                value = postTelefono, onValueChange = { postTelefono = it },
+                label = { Text("Teléfono") },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(Modifier.height(8.dp))
+            Button(
+                onClick = {
+                    if (postNombre.isNotBlank() && postTelefono.isNotBlank()) {
+                        vm.apiCreatePropietario(postNombre, postTelefono)
+                        postNombre = ""; postTelefono = ""
+                    }
+                },
+                modifier = Modifier.fillMaxWidth()
+            ) { Text("POST → Crear") }
+            SectionDivider("PUT / DELETE — Selecciona un propietario")
+        }
+        items(propietarios, key = { it.propietarioId }) { propietario ->
+            ApiEntityCard(
+                title = propietario.nombre,
+                subtitle = "Tel: ${propietario.telefono}  |  id: ${propietario.propietarioId}",
+                isSelected = seleccionado?.propietarioId == propietario.propietarioId,
+                onSelect = { seleccionado = propietario; editNombre = propietario.nombre; editTelefono = propietario.telefono },
+                onCancel = { seleccionado = null },
+                onPut = { vm.apiUpdatePropietario(propietario.copy(nombre = editNombre, telefono = editTelefono)); seleccionado = null },
+                onDelete = { vm.apiDeletePropietario(propietario); seleccionado = null }
+            ) {
+                OutlinedTextField(value = editNombre, onValueChange = { editNombre = it }, label = { Text("Nombre") }, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(
+                    value = editTelefono, onValueChange = { editTelefono = it },
+                    label = { Text("Teléfono") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        }
+    }
+}
+
+
+// API SYNC — MECÁNICOS
+
+@Composable
+fun ApiSyncMecanicos(vm: ElViewModel) {
+    val mecanicos by vm.allMecanicos.collectAsStateWithLifecycle()
+
+    var postNombre by remember { mutableStateOf("") }
+    var postEspecialidad by remember { mutableStateOf("") }
+    var seleccionado by remember { mutableStateOf<Mecanico?>(null) }
+    var editNombre by remember { mutableStateOf("") }
+    var editEspecialidad by remember { mutableStateOf("") }
+
+    LazyColumn(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+        item {
+            Button(onClick = { vm.fetchMecanicos() }, modifier = Modifier.fillMaxWidth()) { Text("🔄  GET /mecanicos") }
+            SectionDivider("POST /mecanicos — Crear mecánico")
+            OutlinedTextField(value = postNombre, onValueChange = { postNombre = it }, label = { Text("Nombre") }, modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(value = postEspecialidad, onValueChange = { postEspecialidad = it }, label = { Text("Especialidad") }, modifier = Modifier.fillMaxWidth())
+            Spacer(Modifier.height(8.dp))
+            Button(
+                onClick = {
+                    if (postNombre.isNotBlank() && postEspecialidad.isNotBlank()) {
+                        vm.apiCreateMecanico(postNombre, postEspecialidad)
+                        postNombre = ""; postEspecialidad = ""
+                    }
+                },
+                modifier = Modifier.fillMaxWidth()
+            ) { Text("POST → Crear") }
+            SectionDivider("PUT / DELETE — Selecciona un mecánico")
+        }
+        items(mecanicos, key = { it.id }) { mecanico ->
+            ApiEntityCard(
+                title = mecanico.nombre,
+                subtitle = "Especialidad: ${mecanico.especialidad}  |  id: ${mecanico.id}",
+                isSelected = seleccionado?.id == mecanico.id,
+                onSelect = { seleccionado = mecanico; editNombre = mecanico.nombre; editEspecialidad = mecanico.especialidad },
+                onCancel = { seleccionado = null },
+                onPut = { vm.apiUpdateMecanico(mecanico.copy(nombre = editNombre, especialidad = editEspecialidad)); seleccionado = null },
+                onDelete = { vm.apiDeleteMecanico(mecanico); seleccionado = null }
+            ) {
+                OutlinedTextField(value = editNombre, onValueChange = { editNombre = it }, label = { Text("Nombre") }, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(value = editEspecialidad, onValueChange = { editEspecialidad = it }, label = { Text("Especialidad") }, modifier = Modifier.fillMaxWidth())
+            }
+        }
+    }
+}
+
+
+// API SYNC — ASIGNACIONES COCHE-MECÁNICO
+
+@Composable
+fun ApiSyncAsignaciones(vm: ElViewModel) {
+    val cochesConMecanicos by vm.cochesConMecanicos.collectAsStateWithLifecycle()
+    val mecanicos by vm.allMecanicos.collectAsStateWithLifecycle()
+
+    LazyColumn(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+        item {
+            Button(onClick = { vm.fetchCocheMecanico() }, modifier = Modifier.fillMaxWidth()) { Text("🔄  GET /cochemecanico") }
+            SectionDivider("POST / DELETE — Gestionar asignaciones vía API")
+            Text(
+                "Los botones POST y DELETE crean o eliminan la asignación tanto en la API como en la base de datos local.",
+                style = MaterialTheme.typography.bodySmall
+            )
+            Spacer(Modifier.height(8.dp))
+        }
+        items(cochesConMecanicos, key = { it.coche.id }) { cocheConMecanicos ->
+            val coche = cocheConMecanicos.coche
+            val asignados = cocheConMecanicos.mecanicos.map { it.id }.toSet()
+
+            Card(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), elevation = CardDefaults.cardElevation(2.dp)) {
                 Column(modifier = Modifier.padding(12.dp)) {
                     Text("${coche.marca} ${coche.modelo} (id: ${coche.id})", style = MaterialTheme.typography.titleSmall)
-                    Text("Color: ${coche.color}")
-
-                    if (seleccionado) {
-                        Spacer(Modifier.height(8.dp))
-                        OutlinedTextField(value = editColor, onValueChange = { editColor = it }, label = { Text("Color") }, modifier = Modifier.fillMaxWidth())
-                        OutlinedTextField(value = editMarca, onValueChange = { editMarca = it }, label = { Text("Marca") }, modifier = Modifier.fillMaxWidth())
-                        OutlinedTextField(value = editModelo, onValueChange = { editModelo = it }, label = { Text("Modelo") }, modifier = Modifier.fillMaxWidth())
-                        Spacer(Modifier.height(8.dp))
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Button(
-                                onClick = {
-                                    vm.apiUpdateCoche(coche.copy(color = editColor, marca = editMarca, modelo = editModelo))
-                                    cocheSeleccionado = null
-                                },
-                                modifier = Modifier.weight(1f)
-                            ) { Text("PUT → Actualizar") }
-                            Button(
-                                onClick = {
-                                    vm.apiDeleteCoche(coche)
-                                    cocheSeleccionado = null
-                                },
-                                modifier = Modifier.weight(1f),
-                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
-                            ) { Text("DELETE") }
+                    Spacer(Modifier.height(6.dp))
+                    mecanicos.forEach { mecanico ->
+                        val estaAsignado = mecanico.id in asignados
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                "${mecanico.nombre} (${mecanico.especialidad})",
+                                modifier = Modifier.weight(1f).padding(end = 8.dp),
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                            if (estaAsignado) {
+                                Button(
+                                    onClick = { vm.apiDeleteCocheMecanico(coche.id, mecanico.id) },
+                                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                                ) { Text("DELETE") }
+                            } else {
+                                Button(onClick = { vm.apiCreateCocheMecanico(coche.id, mecanico.id) }) {
+                                    Text("POST")
+                                }
+                            }
                         }
-                        OutlinedButton(
-                            onClick = { cocheSeleccionado = null },
-                            modifier = Modifier.fillMaxWidth()
-                        ) { Text("Cancelar") }
-                    } else {
-                        Spacer(Modifier.height(4.dp))
-                        OutlinedButton(
-                            onClick = {
-                                cocheSeleccionado = coche
-                                editColor = coche.color
-                                editMarca = coche.marca
-                                editModelo = coche.modelo
-                            },
-                            modifier = Modifier.fillMaxWidth()
-                        ) { Text("Seleccionar para editar / borrar") }
                     }
                 }
             }
