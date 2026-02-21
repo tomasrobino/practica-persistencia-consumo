@@ -11,9 +11,7 @@ import io.ktor.client.request.get
 import io.ktor.client.request.post
 import io.ktor.client.request.put
 import io.ktor.client.request.setBody
-import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
-import io.ktor.http.contentType
 
 class ApiRepository(
     private val cocheDao: CocheDao,
@@ -32,7 +30,14 @@ class ApiRepository(
     }
 
     suspend fun createCoche(dto: CocheDto): Result<CocheDto> = runCatching {
-        val created: CocheDto = client.post(ApiRoutes.COCHES) { setBody(dto) }.body()
+        val created: CocheDto = client.post(ApiRoutes.COCHES) {
+            setBody(CreateCocheDto(
+                color = dto.color,
+                marca = dto.marca,
+                modelo = dto.modelo,
+                propietarioId = dto.propietarioId
+            ))
+        }.body()
         cocheDao.upsertCoche(created.toEntity())
         created
     }
@@ -60,7 +65,14 @@ class ApiRepository(
     }
 
     suspend fun createMotor(dto: MotorDto): Result<MotorDto> = runCatching {
-        val created: MotorDto = client.post(ApiRoutes.MOTORES) { setBody(dto) }.body()
+        val created: MotorDto = client.post(ApiRoutes.MOTORES) {
+            setBody(CreateMotorDto(
+                marca = dto.marca,
+                modelo = dto.modelo,
+                cilindrada = dto.cilindrada,
+                cocheId = dto.cocheId
+            ))
+        }.body()
         motorDao.upsertMotor(created.toEntity())
         created
     }
@@ -81,7 +93,6 @@ class ApiRepository(
 
 
 
-
     suspend fun fetchAndSyncPropietarios(): Result<List<PropietarioDto>> = runCatching {
         val dtos: List<PropietarioDto> = client.get(ApiRoutes.PROPIETARIOS).body()
         dtos.forEach { propietarioDao.upsertPropietario(it.toEntity()) }
@@ -89,7 +100,12 @@ class ApiRepository(
     }
 
     suspend fun createPropietario(dto: PropietarioDto): Result<PropietarioDto> = runCatching {
-        val created: PropietarioDto = client.post(ApiRoutes.PROPIETARIOS) { setBody(dto) }.body()
+        val created: PropietarioDto = client.post(ApiRoutes.PROPIETARIOS) {
+            setBody(CreatePropietarioDto(
+                nombre = dto.nombre,
+                telefono = dto.telefono
+            ))
+        }.body()
         propietarioDao.upsertPropietario(created.toEntity())
         created
     }
@@ -110,15 +126,20 @@ class ApiRepository(
 
 
 
-
     suspend fun fetchAndSyncMecanicos(): Result<List<MecanicoDto>> = runCatching {
         val dtos: List<MecanicoDto> = client.get(ApiRoutes.MECANICOS).body()
         dtos.forEach { cocheMecanicoDao.upsertMecanico(it.toEntity()) }
         dtos
     }
 
+    // FIX: use CreateMecanicoDto (no id field) so the server auto-generates the id.
     suspend fun createMecanico(dto: MecanicoDto): Result<MecanicoDto> = runCatching {
-        val created: MecanicoDto = client.post(ApiRoutes.MECANICOS) { setBody(dto) }.body()
+        val created: MecanicoDto = client.post(ApiRoutes.MECANICOS) {
+            setBody(CreateMecanicoDto(
+                nombre = dto.nombre,
+                especialidad = dto.especialidad
+            ))
+        }.body()
         cocheMecanicoDao.upsertMecanico(created.toEntity())
         created
     }
@@ -136,7 +157,6 @@ class ApiRepository(
             if (local != null) cocheMecanicoDao.deleteMecanico(local)
         }
     }
-
 
 
 
@@ -158,7 +178,6 @@ class ApiRepository(
         }
         cocheMecanicoDao.deleteCocheMecanicoCrossRef(CocheMecanicoCrossRef(cocheId, mecanicoId))
     }
-
 
 
 
