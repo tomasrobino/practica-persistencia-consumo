@@ -1,8 +1,7 @@
 package com.example.practica_persistencia_consumo
 
-import android.content.Context
 import androidx.room.Dao
-import androidx.room.Database
+import androidx.room.Delete
 import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.Insert
@@ -10,8 +9,7 @@ import androidx.room.Junction
 import androidx.room.PrimaryKey
 import androidx.room.Query
 import androidx.room.Relation
-import androidx.room.Room
-import androidx.room.RoomDatabase
+import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
 
 @Entity(tableName = "coches")
@@ -30,6 +28,15 @@ interface CocheDao {
 
     @Query("SELECT * FROM coches")
     fun getAllCoches(): Flow<List<Coche>>
+
+    @Query("SELECT * FROM coches WHERE id = :id")
+    fun getCocheById(id: Int): Flow<List<Coche>>
+
+    @Delete
+    suspend fun deleteCoche(coche: Coche)
+
+    @Update
+    suspend fun updateCoche(coche: Coche)
 }
 
 //Tabla relacional de muchos a muchos

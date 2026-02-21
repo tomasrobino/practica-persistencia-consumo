@@ -53,22 +53,3 @@ interface MotorDao {
     suspend fun updateMotor(motor: Motor)
 
 }
-
-class MotorRepository(private val motorDao:MotorDao){
-    suspend fun insert(motor: Motor) {
-        motorDao.insert(motor)
-    }
-
-    fun getAllMotores(): Flow<List<Motor>> = motorDao.getAllMotores()
-
-    fun getMotorById(id : Int): Flow<List<Motor>> = motorDao.getMotorById(id)
-
-    suspend fun deleteMotor(motor: Motor){
-        motorDao.deleteMotor(motor)
-    }
-
-    suspend fun updateMotor(motor: Motor){
-        motorDao.updateMotor(motor)
-    }
-
-}
