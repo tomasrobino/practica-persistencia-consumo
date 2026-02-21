@@ -64,18 +64,18 @@ data class CocheConMecanicos(
     Mecanico::class,
     CocheMecanicoCrossRef::class], version = 1, exportSchema = false)
 
-abstract class CocheDatabase: RoomDatabase() {
+abstract class ConcesionarioDatabase: RoomDatabase() {
     abstract fun cocheDao(): CocheDao
     abstract fun MotorDao(): MotorDao
     companion object {
         @Volatile
-        private var INSTANCE: CocheDatabase? = null
+        private var INSTANCE: ConcesionarioDatabase? = null
 
-        fun getDatabase(context: Context): CocheDatabase {
+        fun getDatabase(context: Context): ConcesionarioDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
                     context.applicationContext,
-                    CocheDatabase::class.java,
+                    ConcesionarioDatabase::class.java,
                     "concesionario_database"
                 ).build()
                 INSTANCE = instance

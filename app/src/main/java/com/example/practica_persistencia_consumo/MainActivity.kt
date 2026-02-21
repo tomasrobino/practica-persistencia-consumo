@@ -6,7 +6,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -28,7 +27,7 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun Padre() {
-    val cocheDao = CocheDatabase.getDatabase(LocalContext.current).cocheDao()
+    val cocheDao = ConcesionarioDatabase.getDatabase(LocalContext.current).cocheDao()
     val repository = CocheRepository(cocheDao)
     ListaCoches(repository)
 }
