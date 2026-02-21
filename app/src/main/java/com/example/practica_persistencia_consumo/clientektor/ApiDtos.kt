@@ -7,7 +7,7 @@ import com.example.practica_persistencia_consumo.Motor
 import com.example.practica_persistencia_consumo.Propietario
 import kotlinx.serialization.Serializable
 
-// ─── DTOs para la API (separados de las entidades Room) ───────────────────────
+// DTOs para la API (separados de las entidades Room)
 
 @Serializable
 data class CocheDto(
@@ -23,7 +23,7 @@ data class CocheDto(
 
 fun Coche.toDto() = CocheDto(id = id, color = color, marca = marca, modelo = modelo, propietarioId = propietarioId)
 
-// ──────────────────────────────────────────────────────────────────────────────
+
 
 @Serializable
 data class MotorDto(
@@ -39,7 +39,7 @@ data class MotorDto(
 
 fun Motor.toDto() = MotorDto(id = id, marca = marca, modelo = modelo, cilindrada = cilindrada, cocheId = cocheId)
 
-// ──────────────────────────────────────────────────────────────────────────────
+
 
 @Serializable
 data class PropietarioDto(
@@ -53,7 +53,9 @@ data class PropietarioDto(
 
 fun Propietario.toDto() = PropietarioDto(propietarioId = propietarioId, nombre = nombre, telefono = telefono)
 
-// ──────────────────────────────────────────────────────────────────────────────
+
+
+
 
 @Serializable
 data class MecanicoDto(
@@ -66,7 +68,8 @@ data class MecanicoDto(
 
 fun Mecanico.toDto() = MecanicoDto(id = id, nombre = nombre, especialidad = especialidad)
 
-// ──────────────────────────────────────────────────────────────────────────────
+
+
 
 @Serializable
 data class CocheMecanicoDto(
