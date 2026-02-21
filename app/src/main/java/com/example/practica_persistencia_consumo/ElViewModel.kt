@@ -7,8 +7,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-class ElViewModel(private val cocheRepository: CocheRepository): ViewModel() {
-    val allCoches: StateFlow<List<Coche>> = cocheRepository.getAllCoches().stateIn(
+class ElViewModel(private val cocheDao: CocheDao): ViewModel() {
+    val allCoches: StateFlow<List<Coche>> = cocheDao.getAllCoches().stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = emptyList()
@@ -17,7 +17,7 @@ class ElViewModel(private val cocheRepository: CocheRepository): ViewModel() {
     fun insertCoche(color: String, marca: String, modelo: String) {
         viewModelScope.launch {
             val coche = Coche(color = color, marca = marca, modelo = modelo)
-            cocheRepository.insertCoche(coche)
+            cocheDao.insert(coche)
         }
     }
 }
