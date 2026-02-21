@@ -10,11 +10,14 @@ import androidx.room.RoomDatabase
     Motor::class,
     Propietario::class,
     Mecanico::class,
-    CocheMecanicoCrossRef::class], version = 3, exportSchema = false)
+    CocheMecanicoCrossRef::class], version = 4, exportSchema = false)
 
 abstract class ConcesionarioDatabase: RoomDatabase() {
     abstract fun cocheDao(): CocheDao
-    abstract fun MotorDao(): MotorDao
+    abstract fun motorDao(): MotorDao
+    abstract fun propietarioDao(): PropietarioDao
+    abstract fun cocheMecanicoDao(): CocheMecanicoDao
+
     companion object {
         @Volatile
         private var INSTANCE: ConcesionarioDatabase? = null

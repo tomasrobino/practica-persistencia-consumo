@@ -17,7 +17,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             PracticapersistenciaconsumoTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+                Scaffold(modifier = Modifier.fillMaxSize()) {
                     Padre()
                 }
             }
@@ -27,6 +27,10 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun Padre() {
-    val cocheDao = ConcesionarioDatabase.getDatabase(LocalContext.current).cocheDao()
-    ListaCoches(cocheDao)
+    val db = ConcesionarioDatabase.getDatabase(LocalContext.current)
+    ListaCoches(
+        cocheDao = db.cocheDao(),
+        propietarioDao = db.propietarioDao(),
+        cocheMecanicoDao = db.cocheMecanicoDao()
+    )
 }
