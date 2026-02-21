@@ -86,7 +86,7 @@ data class CocheConMecanicos(
     @Embedded val coche: Coche,
     @Relation(
         parentColumn = "id",
-        entityColumn = "mecanicoId",
+        entityColumn = "id",
         associateBy = Junction(CocheMecanicoCrossRef::class) // La tabla cruzada
     )
     val mecanicos: List<Mecanico>
