@@ -10,6 +10,7 @@ import androidx.room.PrimaryKey
 import androidx.room.Query
 import androidx.room.Relation
 import androidx.room.Transaction
+import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
 
 @Entity(tableName = "mecanicos")
@@ -35,6 +36,18 @@ data class MecanicosConCoche(
 
 @Dao
 interface CocheMecanicoDao {
+    @Insert
+    suspend fun insertMecanico(mecanico: Mecanico)
+
+    @Update
+    suspend fun updateMecanico(mecanico: Mecanico)
+
+    @Delete
+    suspend fun deleteMecanico(mecanico: Mecanico)
+
+    @Query("SELECT * FROM mecanicos")
+    fun getAllMecanicos(): Flow<List<Mecanico>>
+
     @Insert
     suspend fun insertCocheMecanicoCrossRef(crossRef: CocheMecanicoCrossRef)
 
