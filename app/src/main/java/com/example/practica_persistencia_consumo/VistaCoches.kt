@@ -18,29 +18,43 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 
 @Composable
-fun CocheItem(coche: Coche) {
+fun CocheConMotorItem(cocheConMotor: CocheConMotor) {
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(8.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text(text = coche.color, style = MaterialTheme.typography.bodyLarge)
-            Text(text = coche.marca, style = MaterialTheme.typography.bodyLarge)
-            Text(text = coche.modelo, style = MaterialTheme.typography.bodyLarge)
+            Text(text = cocheConMotor.coche.color, style = MaterialTheme.typography.bodyLarge)
+            Text(text = cocheConMotor.coche.marca, style = MaterialTheme.typography.bodyLarge)
+            Text(text = cocheConMotor.coche.modelo, style = MaterialTheme.typography.bodyLarge)
+            Text(text = cocheConMotor.motor?.marca ?: "", style = MaterialTheme.typography.bodyLarge)
+            Text(text = cocheConMotor.motor?.modelo ?: "", style = MaterialTheme.typography.bodyLarge)
+            Text(text = cocheConMotor.motor?.cilindrada.toString(), style = MaterialTheme.typography.bodyLarge)
         }
     }
 }
 
 @Composable
 fun ListaCoches(cocheDao: CocheDao) {
-    val coches by cocheDao.getAllCoches().collectAsState(initial = emptyList())
+    val cochesConMotor by cocheDao.getCochesConMotor().collectAsState(initial = emptyList())
     val scope = rememberCoroutineScope()
-    Column() {
+    Column {
         Button(onClick = {
             scope.launch {
-                cocheDao.insert(
-                    Coche(color = "fdsfds", modelo = "fdsfsdf", marca = "sddsad")
+                cocheDao.insertCocheConMotor(
+                    Coche(
+                        color = "fdsfds",
+                        modelo = "fdsfsdf",
+                        marca = "sddsad"
+                    ),
+                    Motor(
+                        marca = "BMW",
+                        modelo = "V8",
+                        cilindrada = 4000,
+                        cocheId = 0 // temporary
+                    )
                 )
             }
         }) {
@@ -49,8 +63,8 @@ fun ListaCoches(cocheDao: CocheDao) {
 
 
         LazyColumn {
-            items(coches) {
-                    coche -> CocheItem(coche = coche)
+            items(cochesConMotor) {
+                    cocheConMotor -> CocheConMotorItem(cocheConMotor = cocheConMotor)
             }
         }
     }

@@ -25,7 +25,22 @@ data class Coche(
 @Dao
 interface CocheDao {
     @Insert
-    suspend fun insert(coche: Coche)
+    suspend fun insert(coche: Coche): Long
+
+    @Insert
+    suspend fun insertMotor(motor: Motor)
+
+    @Transaction
+    suspend fun insertCocheConMotor(
+        coche: Coche,
+        motor: Motor
+    ) {
+        val cocheId = insert(coche).toInt()
+
+        val motorConId = motor.copy(cocheId = cocheId)
+
+        insertMotor(motorConId)
+    }
 
     @Query("SELECT * FROM coches")
     fun getAllCoches(): Flow<List<Coche>>

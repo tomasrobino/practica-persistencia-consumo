@@ -25,7 +25,7 @@ abstract class ConcesionarioDatabase: RoomDatabase() {
                                 context.applicationContext,
                                 ConcesionarioDatabase::class.java,
                                 "concesionario_database"
-                            ).fallbackToDestructiveMigration(true).build()
+                            ).fallbackToDestructiveMigration(true).build() // para que no crashee al hacer cambios
                 INSTANCE = instance
                 return instance
             }

@@ -14,7 +14,6 @@ import kotlinx.coroutines.flow.Flow
     tableName ="motores",
     //Esta es la parate necesiara para no tener que creal el CRUD
     // del resto de entidades que no sean Coche
-
     foreignKeys = [
         ForeignKey(
             entity = Coche::class,
