@@ -62,7 +62,6 @@ fun Motor.toDto() = MotorDto(id = id, marca = marca, modelo = modelo, cilindrada
 
 @Serializable
 data class PropietarioDto(
-    @SerialName("id")
     val propietarioId: Int = 0,
     val nombre: String,
     val telefono: String

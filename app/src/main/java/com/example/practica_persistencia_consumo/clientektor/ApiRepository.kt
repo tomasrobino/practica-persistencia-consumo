@@ -12,6 +12,8 @@ import io.ktor.client.request.post
 import io.ktor.client.request.put
 import io.ktor.client.request.setBody
 import io.ktor.http.HttpStatusCode
+import kotlinx.serialization.json.int
+import kotlinx.serialization.json.jsonPrimitive
 
 class ApiRepository(
     private val cocheDao: CocheDao,
@@ -100,12 +102,12 @@ class ApiRepository(
     }
 
     suspend fun createPropietario(dto: PropietarioDto): Result<PropietarioDto> = runCatching {
-        val created: PropietarioDto = client.post(ApiRoutes.PROPIETARIOS) {
-            setBody(CreatePropietarioDto(
-                nombre = dto.nombre,
-                telefono = dto.telefono
-            ))
-        }.body()
+        val response = client.post(ApiRoutes.PROPIETARIOS) {
+            setBody(CreatePropietarioDto(nombre = dto.nombre, telefono = dto.telefono))
+        }
+        val raw: kotlinx.serialization.json.JsonObject = response.body()
+        val serverId = raw["id"]?.jsonPrimitive?.int ?: 0
+        val created = dto.copy(propietarioId = serverId)
         propietarioDao.upsertPropietario(created.toEntity())
         created
     }
