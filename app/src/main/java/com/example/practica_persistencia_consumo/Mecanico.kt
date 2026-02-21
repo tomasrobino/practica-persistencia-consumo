@@ -6,6 +6,7 @@ import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.Insert
 import androidx.room.Junction
+import androidx.room.OnConflictStrategy
 import androidx.room.PrimaryKey
 import androidx.room.Query
 import androidx.room.Relation
@@ -39,6 +40,10 @@ interface CocheMecanicoDao {
     @Insert
     suspend fun insertMecanico(mecanico: Mecanico)
 
+    /** Upsert para sincronización con la API */
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsertMecanico(mecanico: Mecanico)
+
     @Update
     suspend fun updateMecanico(mecanico: Mecanico)
 
@@ -48,7 +53,10 @@ interface CocheMecanicoDao {
     @Query("SELECT * FROM mecanicos")
     fun getAllMecanicos(): Flow<List<Mecanico>>
 
-    @Insert
+    @Query("SELECT * FROM mecanicos WHERE id = :id")
+    suspend fun getMecanicoByIdOnce(id: Int): Mecanico?
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertCocheMecanicoCrossRef(crossRef: CocheMecanicoCrossRef)
 
     @Delete

@@ -5,6 +5,7 @@ import androidx.room.Delete
 import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.Insert
+import androidx.room.OnConflictStrategy
 import androidx.room.PrimaryKey
 import androidx.room.Query
 import androidx.room.Relation
@@ -33,6 +34,10 @@ interface PropietarioDao {
     @Insert
     suspend fun insertPropietario(propietario: Propietario): Long
 
+    /** Upsert para sincronización con la API */
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsertPropietario(propietario: Propietario)
+
     @Update
     suspend fun updatePropietario(propietario: Propietario)
 
@@ -44,6 +49,10 @@ interface PropietarioDao {
 
     @Query("SELECT * FROM propietario WHERE propietarioId = :id")
     fun getPropietarioById(id: Int): Flow<Propietario?>
+
+    /** Versión suspend (no Flow) para el repositorio */
+    @Query("SELECT * FROM propietario WHERE propietarioId = :id")
+    suspend fun getPropietarioByIdOnce(id: Int): Propietario?
 
     @Transaction
     @Query("SELECT * FROM propietario")

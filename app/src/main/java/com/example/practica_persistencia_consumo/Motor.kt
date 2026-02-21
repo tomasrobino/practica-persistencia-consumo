@@ -38,11 +38,19 @@ interface MotorDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertMotor(motor: Motor)
 
+    /** Upsert para sincronización con la API */
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsertMotor(motor: Motor)
+
     @Query("SELECT * FROM motores")
     fun getAllMotores(): Flow<List<Motor>>
 
     @Query("SELECT * FROM motores WHERE id = :id")
     fun getMotorById(id: Int): Flow<Motor?>
+
+    /** Versión suspend (no Flow) para el repositorio */
+    @Query("SELECT * FROM motores WHERE id = :id")
+    suspend fun getMotorByIdOnce(id: Int): Motor?
 
     @Delete
     suspend fun deleteMotor(motor: Motor)

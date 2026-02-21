@@ -7,6 +7,7 @@ import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.Insert
 import androidx.room.Junction
+import androidx.room.OnConflictStrategy
 import androidx.room.PrimaryKey
 import androidx.room.Query
 import androidx.room.Relation
@@ -31,6 +32,10 @@ interface CocheDao {
     @Insert
     suspend fun insertMotor(motor: Motor)
 
+    // Upsert: INSERT OR REPLACE — usado para sincronizar con la API
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsertCoche(coche: Coche)
+
     @Transaction
     suspend fun insertCocheConMotor(coche: Coche, motor: Motor) {
         val cocheId = insert(coche).toInt()
@@ -42,6 +47,10 @@ interface CocheDao {
 
     @Query("SELECT * FROM coches WHERE id = :id")
     fun getCocheById(id: Int): Flow<Coche?>
+
+    /** Versión suspend (no Flow) para uso en el repositorio */
+    @Query("SELECT * FROM coches WHERE id = :id")
+    suspend fun getCocheByIdOnce(id: Int): Coche?
 
     @Delete
     suspend fun deleteCoche(coche: Coche)
